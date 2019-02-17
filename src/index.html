@@ -4,8 +4,16 @@
     <title>Embedded UniCircle Visualiser</title>
 </head>
 <body>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
     <script>    // expose global for setting graph data
-        const setData = data => document.getElementById("uniCircleVisualiser").setData(data);
+        const setData = (beatmapSettings, hitObjects, skillDatas) => document.getElementById("uniCircleVisualiser").setData(beatmapSettings, hitObjects, skillDatas);
     </script>
 
     <unicircle-visualiser id="uniCircleVisualiser"></unicircle-visualiser>
