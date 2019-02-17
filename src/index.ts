@@ -1,4 +1,9 @@
-import * as d3 from "d3";
+import { select, mouse } from "d3-selection";
+import { scaleLinear } from "d3-scale";
+import { line, curveMonotoneX } from "d3-shape";
+import { axisLeft, axisBottom } from "d3-axis";
+import { bisectLeft } from "d3-array";
+
 import Utils from "./utils";
 
 class UniCircleVisualiser extends HTMLElement {
@@ -105,7 +110,7 @@ class UniCircleVisualiser extends HTMLElement {
 
     initialiseSvgs() {
         // initialse line chart svgs
-        d3.select(this.graphContainer).selectAll("svg").remove();
+        select(this.graphContainer).selectAll("svg").remove();
         // remove any old svgs
         this.charts = new Map<string, Chart>();
         // TODO: refactor so a new svgs dont need to be for created each resize
@@ -125,20 +130,20 @@ class UniCircleVisualiser extends HTMLElement {
                 let width = this.graphContainer.offsetWidth - margin.left - margin.right;
                 let height = this.graphContainer.offsetHeight / 3 - margin.top - margin.bottom;
         
-                chart.xScale = d3.scaleLinear()
+                chart.xScale = scaleLinear()
                     .domain([0, Math.max(...this.hitObjects.map(h =>h.time))])
                     .range([0, width]);
         
-                chart.yScale = d3.scaleLinear()
+                chart.yScale = scaleLinear()
                     .domain([0, Math.max(...dataSet.dataPoints)])
                     .range([height, 0]);
         
-                chart.line = d3.line<number>()
+                chart.line = line<number>()
                     .x((d, i) => chart.xScale(this.hitObjects[i].time))
                     .y(d => chart.yScale(d))
-                    .curve(d3.curveMonotoneX);
+                    .curve(curveMonotoneX);
         
-                chart.svg = d3.select(this.graphContainer).append("svg")
+                chart.svg = select(this.graphContainer).append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
                   .append("g")
@@ -159,11 +164,11 @@ class UniCircleVisualiser extends HTMLElement {
                 chart.svg.append("g")
                     .attr("class", "x-axis")
                     .attr("transform", `translate(0, ${height})`)
-                    .call(d3.axisBottom(chart.xScale));
+                    .call(axisBottom(chart.xScale));
                 
                 chart.svg.append("g")
                     .attr("class", "y-axis")
-                    .call(d3.axisLeft(chart.yScale));
+                    .call(axisLeft(chart.yScale));
         
                 chart.svg.append("path")
                     .attr("class", "line");
@@ -173,7 +178,7 @@ class UniCircleVisualiser extends HTMLElement {
         }
 
         // initialise map preview svg
-        d3.select(this.mapContainer).select("svg").remove();
+        select(this.mapContainer).select("svg").remove();
         this.mapPreview = {} as MapPreview;
 
         // maintain 4:3 aspect ratio to match osu!px playfield (512:384)
@@ -187,11 +192,11 @@ class UniCircleVisualiser extends HTMLElement {
         // only need a single scale since aspect ratio must be constant
         // scale can be used for x, y, circle radius, etc
         // scale takes osu!px input and outputs equivilent in svg space
-        this.mapPreview.scale = d3.scaleLinear()
+        this.mapPreview.scale = scaleLinear()
             .domain([0, 512])
             .range([0, width]);
 
-        this.mapPreview.svg = d3.select(this.mapContainer).append("svg")
+        this.mapPreview.svg = select(this.mapContainer).append("svg")
             .attr("width", width)
             .attr("height", height);
 
@@ -202,7 +207,7 @@ class UniCircleVisualiser extends HTMLElement {
             .attr("text-anchor", "middle");
 
         // initialise ar scale
-        this.arScale = d3.scaleLinear()
+        this.arScale = scaleLinear()
             .domain([0, Utils.arToMilliseconds(this.beatmapSettings.ar)])
             .range([1, 4]);
     }
@@ -233,9 +238,9 @@ class UniCircleVisualiser extends HTMLElement {
             let dataSet = this.skillDatas.find(s => s.name == skillName).dataSets.find(d => d.name == dataSetName);
 
             svg.on("mousemove", () => {
-                let [x, y] = d3.mouse(svg.node());
+                let [x, y] = mouse(svg.node());
                 let time = chart.xScale.invert(x);
-                let dataPointIndex = d3.bisectLeft(this.hitObjects.map(h => h.time), time);
+                let dataPointIndex = bisectLeft(this.hitObjects.map(h => h.time), time);
                 
                 this.currentTime = time;
                 this.render();
